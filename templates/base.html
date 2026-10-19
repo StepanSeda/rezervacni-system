@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IronBox Fitness – rezervace lekcí</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="navbar">
+    <a href="{{ url_for('index') }}" class="logo">IRON<span>BOX</span></a>
+    <nav>
+      <a href="{{ url_for('index') }}#lekce">Lekce</a>
+      <a href="{{ url_for('index') }}#rozvrh">Rozvrh</a>
+      <a href="{{ url_for('index') }}#kontakt">Kontakt</a>
+      {% if user %}
+        <a href="{{ url_for('my') }}">Moje rezervace</a>
+        {% if user.is_admin %}<a href="{{ url_for('admin') }}">Admin</a>{% endif %}
+        <a href="{{ url_for('logout') }}" class="btn btn-small">Odhlásit ({{ user.name }})</a>
+      {% else %}
+        <a href="{{ url_for('register') }}">Registrace</a>
+        <a href="{{ url_for('login') }}" class="btn btn-small">Přihlásit se</a>
+      {% endif %}
+    </nav>
+  </header>
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+  <footer><p>© 2026 IronBox Fitness – maturitní práce</p></footer>
+</body>
+</html>

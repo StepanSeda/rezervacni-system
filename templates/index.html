@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <h1>Rezervuj si lekci <span>během pár vteřin</span></h1>
+    <p>Crossfit, posilování, kondiční tréninky i jóga. Vyber si termín, zarezervuj místo a přijď makat.</p>
+    <a href="#rozvrh" class="btn">Zobrazit rozvrh</a>
+  </div>
+</section>
+
+<section id="lekce" class="section">
+  <h2>Naše lekce</h2>
+  <div class="cards">
+    {% for c in classes %}
+    <article class="card">
+      <div class="card-img img-{{ ['crossfit','silovy','hiit','joga'][loop.index0 % 4] }}"><span>{{ c.emoji }}</span></div>
+      <h3>{{ c.name }}</h3>
+      <p>{{ c.description }}</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="rozvrh" class="section section-dark">
+  <h2>Nadcházející termíny</h2>
+  <form method="get" class="filter">
+    <select name="lekce" onchange="this.form.submit()">
+      <option value="">Všechny lekce</option>
+      {% for c in classes %}<option value="{{ c.id }}" {{ 'selected' if cid == c.id }}>{{ c.name }}</option>{% endfor %}
+    </select>
+  </form>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Termín</th><th>Lekce</th><th>Trenér</th><th>Obsazeno</th><th></th></tr></thead>
+      <tbody>
+      {% for s in sessions %}
+        {% set free = s.capacity - s.taken %}
+        <tr>
+          <td>{{ s.starts_at | fmt }}</td>
+          <td>{{ s.emoji }} {{ s.cname }}</td>
+          <td>{{ s.trainer }}</td>
+          <td><span class="badge {{ 'full' if free <= 0 else 'low' if free <= 2 else 'ok' }}">{{ s.taken }} / {{ s.capacity }}</span></td>
+          <td>
+            <form method="post" action="{{ url_for('cancel' if s.mine else 'book', sid=s.id) }}">
+              {% if s.mine %}<button class="btn btn-small btn-ghost">Zrušit</button>
+              {% elif free <= 0 %}<button class="btn btn-small btn-disabled" disabled>Plno</button>
+              {% else %}<button class="btn btn-small">Rezervovat</button>{% endif %}
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Žádné termíny.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="kontakt" class="section">
+  <h2>Kontakt</h2>
+  <div class="contact">
+    <p><strong>IronBox Fitness</strong></p>
+    <p>Sportovní 12, 739 91 Jablunkov</p>
+    <p>info@ironbox.cz &nbsp;|&nbsp; +420 123 456 789</p>
+    <p>Po–Pá 6:00–21:00 &nbsp;|&nbsp; So 8:00–14:00</p>
+  </div>
+</section>
+{% endblock %}
