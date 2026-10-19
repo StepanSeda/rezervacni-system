@@ -1,0 +1,190 @@
+:root {
+  --bg: #0f0f12;
+  --bg-alt: #17171c;
+  --card: #1e1e25;
+  --text: #f2f2f2;
+  --muted: #a0a0ab;
+  --accent: #ff5a1f;
+  --accent-hover: #ff7a47;
+  --ok: #2ecc71;
+  --low: #f1c40f;
+  --full: #e74c3c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ---------- Navigace ---------- */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  background: rgba(15, 15, 18, 0.95);
+  border-bottom: 1px solid #26262e;
+}
+
+.logo { font-size: 1.6rem; font-weight: 800; letter-spacing: 2px; }
+.logo span { color: var(--accent); }
+
+.navbar nav { display: flex; align-items: center; gap: 24px; }
+.navbar nav a:not(.btn) { color: var(--muted); transition: color 0.2s; }
+.navbar nav a:not(.btn):hover { color: var(--text); }
+
+/* ---------- Tlačítka ---------- */
+.btn {
+  display: inline-block;
+  padding: 14px 32px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-small { padding: 8px 18px; font-size: 0.9rem; }
+.btn-disabled { background: #3a3a44; color: var(--muted); pointer-events: none; }
+
+/* ---------- Hero ---------- */
+.hero {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  background:
+    linear-gradient(90deg, rgba(15,15,18,0.95) 30%, rgba(15,15,18,0.45)),
+    url("images/hero.jpg") center / cover,
+    linear-gradient(135deg, #3a1608, #0f0f12 60%);
+}
+
+.hero-content { max-width: 640px; }
+.hero h1 { font-size: 3.2rem; line-height: 1.15; margin-bottom: 20px; }
+.hero h1 span { color: var(--accent); }
+.hero p { font-size: 1.15rem; color: var(--muted); margin-bottom: 32px; }
+
+/* ---------- Sekce ---------- */
+.section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+.section-dark { max-width: none; background: var(--bg-alt); }
+.section-dark > * { max-width: 1100px; margin-left: auto; margin-right: auto; }
+
+.section h2 {
+  font-size: 2rem;
+  margin-bottom: 36px;
+  position: relative;
+  padding-bottom: 12px;
+}
+.section h2::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 60px; height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ---------- Karty lekcí ---------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 24px;
+}
+.card {
+  background: var(--card);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #2a2a33;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.card:hover { transform: translateY(-4px); border-color: var(--accent); }
+.card h3 { padding: 18px 24px 6px; font-size: 1.2rem; }
+.card p { padding: 0 24px 24px; color: var(--muted); font-size: 0.95rem; }
+
+/* Obrázky karet: fotka z images/ překryje barevný přechod.
+   Když fotka chybí, zůstane jen přechod. */
+.card-img {
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+.card-img span { font-size: 3rem; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+.img-crossfit { background-image: url("images/crossfit.jpg"), linear-gradient(135deg, #ff5a1f, #8a1f00); }
+.img-silovy   { background-image: url("images/silovy.jpg"),   linear-gradient(135deg, #3a3a44, #0f0f12); }
+.img-hiit     { background-image: url("images/hiit.jpg"),     linear-gradient(135deg, #ff9a1f, #c4200a); }
+.img-joga     { background-image: url("images/joga.jpg"),     linear-gradient(135deg, #1f8a7a, #0f2f3a); }
+
+/* Pruh s čísly */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  max-width: 1100px;
+  margin: -50px auto 0;
+  padding: 28px;
+  position: relative;
+  z-index: 2;
+  background: var(--card);
+  border: 1px solid #2a2a33;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.stats strong { display: block; font-size: 2.2rem; color: var(--accent); }
+.stats span { color: var(--muted); font-size: 0.9rem; }
+
+/* ---------- Tabulka rozvrhu ---------- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; }
+th, td { padding: 16px 20px; text-align: left; }
+thead { background: #26262e; }
+th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+tbody tr { border-top: 1px solid #2a2a33; }
+tbody tr:hover { background: #24242c; }
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.badge.ok   { background: rgba(46,204,113,0.15); color: var(--ok); }
+.badge.low  { background: rgba(241,196,15,0.15); color: var(--low); }
+.badge.full { background: rgba(231,76,60,0.15);  color: var(--full); }
+
+/* ---------- Kontakt a patička ---------- */
+.contact p { color: var(--muted); margin-bottom: 6px; }
+.contact strong { color: var(--text); font-size: 1.2rem; }
+
+footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  border-top: 1px solid #26262e;
+}
+
+/* ---------- Mobil ---------- */
+@media (max-width: 700px) {
+  .navbar { padding: 14px 20px; }
+  .navbar nav a:not(.btn) { display: none; }
+  .hero { padding: 0 20px; }
+  .hero h1 { font-size: 2.2rem; }
+  .section { padding: 56px 20px; }
+}
