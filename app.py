@@ -45,6 +45,15 @@ CREATE TABLE IF NOT EXISTS waitlist(
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
   UNIQUE(user_id, session_id));
+CREATE TABLE IF NOT EXISTS ratings(
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  stars INTEGER NOT NULL CHECK(stars BETWEEN 1 AND 5),
+  PRIMARY KEY(user_id, session_id));
+CREATE TABLE IF NOT EXISTS notifications(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  text TEXT NOT NULL, created_at TEXT NOT NULL, seen INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE IF NOT EXISTS messages(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, email TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -125,7 +134,15 @@ def fmt(s):
 
 @app.context_processor
 def inject_user():
-    return {"user": current_user()}
+    u = current_user()
+    notes = []
+    if u:
+        notes = db().execute("SELECT text FROM notifications WHERE user_id=? AND seen=0 ORDER BY id",
+                             (u["id"],)).fetchall()
+        if notes:
+            db().execute("UPDATE notifications SET seen=1 WHERE user_id=?", (u["id"],))
+            db().commit()
+    return {"user": u, "notes": notes}
 
 
 def current_user():
@@ -166,7 +183,10 @@ def index():
     extra, args = ("AND s.class_id=?3", [uid, datetime.now().strftime(FMT), cid]) if cid \
         else ("", [uid, datetime.now().strftime(FMT)])
     sessions = db().execute(SESSION_SQL.format(extra=extra), args).fetchall()
-    classes = db().execute("SELECT * FROM classes").fetchall()
+    classes = db().execute("""SELECT c.*,
+        (SELECT ROUND(AVG(r.stars),1) FROM ratings r JOIN sessions s ON s.id=r.session_id WHERE s.class_id=c.id) AS avg_rating,
+        (SELECT COUNT(*) FROM ratings r JOIN sessions s ON s.id=r.session_id WHERE s.class_id=c.id) AS n_rating
+        FROM classes c""").fetchall()
     q = lambda sql: db().execute(sql).fetchone()[0]
     stats = dict(classes=q("SELECT COUNT(*) FROM classes"),
                  trainers=q("SELECT COUNT(DISTINCT trainer) FROM sessions"),
@@ -263,7 +283,9 @@ def my():
         JOIN sessions s ON s.id=w.session_id JOIN classes c ON c.id=s.class_id
         WHERE w.user_id=? AND s.starts_at>? ORDER BY s.starts_at""",
                         (session["uid"], now)).fetchall()
-    return render_template("my.html", wait=wait, upcoming=[r for r in rows if r["starts_at"] > now],
+    rated = {r["session_id"]: r["stars"] for r in
+             db().execute("SELECT session_id, stars FROM ratings WHERE user_id=?", (session["uid"],))}
+    return render_template("my.html", rated=rated, wait=wait, upcoming=[r for r in rows if r["starts_at"] > now],
                            past=[r for r in rows if r["starts_at"] <= now])
 
 
@@ -294,7 +316,15 @@ def admin():
     users = db().execute("""SELECT u.*, (SELECT COUNT(*) FROM bookings b WHERE b.user_id=u.id) AS n
         FROM users u ORDER BY u.id""").fetchall()
     msgs = db().execute("SELECT * FROM messages ORDER BY id DESC LIMIT 20").fetchall()
-    return render_template("admin.html", classes=classes, rows=rows, users=users, msgs=msgs)
+    one = lambda sql: db().execute(sql).fetchone()[0]
+    cap, bk = one("SELECT COALESCE(SUM(capacity),0) FROM sessions"), one("SELECT COUNT(*) FROM bookings")
+    stats = dict(bookings=bk, fill=round(100 * bk / cap) if cap else 0,
+                 avg=one("SELECT ROUND(AVG(stars),1) FROM ratings"),
+                 popular=db().execute("""SELECT c.emoji, c.name, COUNT(b.id) AS n,
+                   (SELECT ROUND(AVG(r.stars),1) FROM ratings r JOIN sessions s2 ON s2.id=r.session_id WHERE s2.class_id=c.id) AS avg
+                   FROM classes c LEFT JOIN sessions s ON s.class_id=c.id LEFT JOIN bookings b ON b.session_id=s.id
+                   GROUP BY c.id ORDER BY n DESC""").fetchall())
+    return render_template("admin.html", classes=classes, rows=rows, users=users, msgs=msgs, stats=stats)
 
 
 @app.route("/admin/smazat/<int:sid>", methods=["POST"])
@@ -394,7 +424,7 @@ def promote(sid):
     """Uvolněné místo dostane první z čekací listiny, který má kredit."""
     d = db()
     while True:
-        cap = d.execute("SELECT capacity FROM sessions WHERE id=?", (sid,)).fetchone()
+        cap = d.execute("SELECT s.capacity, s.starts_at, c.name FROM sessions s JOIN classes c ON c.id=s.class_id WHERE s.id=?", (sid,)).fetchone()
         taken = d.execute("SELECT COUNT(*) FROM bookings WHERE session_id=?", (sid,)).fetchone()[0]
         if not cap or taken >= cap["capacity"]:
             break
@@ -406,6 +436,9 @@ def promote(sid):
         d.execute("INSERT OR IGNORE INTO bookings(user_id,session_id,created_at) VALUES(?,?,?)",
                   (w["user_id"], sid, datetime.now().strftime(FMT)))
         d.execute("UPDATE users SET credits=credits-1 WHERE id=?", (w["user_id"],))
+        d.execute("INSERT INTO notifications(user_id,text,created_at) VALUES(?,?,?)",
+                  (w["user_id"], f"Uvolnilo se místo – byl jsi přihlášen na lekci {cap['name']}, {fmt(cap['starts_at'])}.",
+                   datetime.now().strftime(FMT)))
     d.commit()
 
 
@@ -458,6 +491,46 @@ def admin_export(sid):
     w.writerows([tuple(r) for r in rows])
     return Response("\ufeff" + buf.getvalue(), mimetype="text/csv",
                     headers={"Content-Disposition": f"attachment; filename=prezentka-{sid}.csv"})
+
+
+@app.route("/hodnotit/<int:sid>", methods=["POST"])
+@login_required()
+def rate(sid):
+    try:
+        stars = int(request.form["stars"])
+        assert 1 <= stars <= 5
+    except (ValueError, AssertionError, KeyError):
+        flash("Neplatné hodnocení.", "err")
+        return redirect(url_for("my"))
+    ok = db().execute("""SELECT 1 FROM bookings b JOIN sessions s ON s.id=b.session_id
+        WHERE b.user_id=? AND b.session_id=? AND s.starts_at<=?""",
+                      (session["uid"], sid, datetime.now().strftime(FMT))).fetchone()
+    if not ok:
+        flash("Hodnotit lze jen proběhlou lekci, na kterou jsi byl přihlášen.", "err")
+    else:
+        db().execute("""INSERT INTO ratings(user_id,session_id,stars) VALUES(?,?,?)
+            ON CONFLICT(user_id,session_id) DO UPDATE SET stars=excluded.stars""", (session["uid"], sid, stars))
+        db().commit()
+        flash("Díky za hodnocení!", "ok")
+    return redirect(url_for("my"))
+
+
+@app.route("/moje.ics")
+@login_required()
+def my_ics():
+    rows = db().execute("""SELECT s.*, c.name AS cname FROM bookings b JOIN sessions s ON s.id=b.session_id
+        JOIN classes c ON c.id=s.class_id WHERE b.user_id=? AND s.starts_at>? ORDER BY s.starts_at""",
+                        (session["uid"], datetime.now().strftime(FMT))).fetchall()
+    L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//IronBox//CS"]
+    for r in rows:
+        st = datetime.strptime(r["starts_at"], FMT)
+        L += ["BEGIN:VEVENT", f"UID:ironbox-{r['id']}@ironbox", f"DTSTAMP:{datetime.now():%Y%m%dT%H%M%S}",
+              f"DTSTART:{st:%Y%m%dT%H%M%S}", f"DTEND:{st + timedelta(hours=1):%Y%m%dT%H%M%S}",
+              f"SUMMARY:{r['cname']} ({r['trainer']})", "LOCATION:IronBox Fitness\\, Sportovní 12\\, Jablunkov",
+              "END:VEVENT"]
+    L.append("END:VCALENDAR")
+    return Response("\r\n".join(L), mimetype="text/calendar",
+                    headers={"Content-Disposition": "attachment; filename=moje-lekce.ics"})
 
 
 init_db()

@@ -23,6 +23,7 @@
       <div class="card-img img-{{ ['crossfit','silovy','hiit','joga'][loop.index0 % 4] }}"><span>{{ c.emoji }}</span></div>
       <h3>{{ c.name }}</h3>
       <p>{{ c.description }}</p>
+      {% if c.avg_rating %}<p class="rating">⭐ {{ c.avg_rating }} ({{ c.n_rating }})</p>{% endif %}
     </article>
     {% endfor %}
   </div>

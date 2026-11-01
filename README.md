@@ -26,3 +26,7 @@ Admin: `admin@ironbox.cz` / `admin123` (změň!).
 - Kredity: každá rezervace stojí 1 kredit, storno ho vrací, admin kredity přidává
 - Čekací listina s automatickým přihlášením při uvolnění místa
 - Týdenní opakování termínů v adminu, export prezenčky do CSV
+- Hodnocení proběhlých lekcí (1–5 ⭐), průměr u lekcí a v adminu
+- Notifikace v aplikaci (např. přihlášení z čekací listiny)
+- Export vlastních rezervací do kalendáře (.ics)
+- Statistiky v adminu: obsazenost, nejoblíbenější lekce

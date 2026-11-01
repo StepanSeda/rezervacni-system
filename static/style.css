@@ -211,3 +211,4 @@ button:disabled { cursor: not-allowed; }
 .sub { margin: 32px 0 10px; }
 textarea { padding: 10px 14px; background: var(--card); color: var(--text); border: 1px solid #33333d; border-radius: 8px; font: inherit; }
 .stats { margin-top: 24px; }
+.card p.rating { padding-bottom: 16px; color: var(--low); font-weight: 600; }
