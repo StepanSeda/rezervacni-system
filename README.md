@@ -19,3 +19,10 @@ Admin: `admin@ironbox.cz` / `admin123` (změň!).
 | Zpracování formulářů | registrace, přihlášení, admin, rezervace (validace na serveru) |
 | Logika rezervací | kapacita, zákaz duplicit (UNIQUE), jen budoucí termíny, rušení |
 | Uživatelé a role | hesla hashovaná, admin vs. klient |
+| Zabezpečení | CSRF tokeny, hashovaná hesla, role, validace na serveru |
+| Kontakt, profil, správa lekcí a uživatelů | `/kontakt`, `/profil`, `/admin` |
+
+## Rozšíření
+- Kredity: každá rezervace stojí 1 kredit, storno ho vrací, admin kredity přidává
+- Čekací listina s automatickým přihlášením při uvolnění místa
+- Týdenní opakování termínů v adminu, export prezenčky do CSV

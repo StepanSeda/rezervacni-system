@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section narrow">
+  <h2>Upravit termín</h2>
+  <form method="post" class="form"><input type="hidden" name="csrf" value="{{ csrf() }}">
+    <label>Lekce<select name="class_id">{% for c in classes %}<option value="{{ c.id }}" {{ 'selected' if c.id == s.class_id }}>{{ c.name }}</option>{% endfor %}</select></label>
+    <label>Trenér<input name="trainer" value="{{ s.trainer }}" required></label>
+    <label>Začátek<input type="datetime-local" name="starts_at" value="{{ dt }}" required></label>
+    <label>Kapacita<input type="number" name="capacity" value="{{ s.capacity }}" min="1" required></label>
+    <button class="btn">Uložit</button> <a href="{{ url_for('admin') }}">Zpět</a>
+  </form>
+</section>
+{% endblock %}

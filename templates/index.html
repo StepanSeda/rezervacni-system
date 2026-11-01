@@ -8,6 +8,13 @@
   </div>
 </section>
 
+<section class="stats">
+  <div><strong>{{ stats.classes }}</strong><span>druhy lekcí</span></div>
+  <div><strong>{{ stats.trainers }}</strong><span>trenéři</span></div>
+  <div><strong>{{ stats.sessions }}</strong><span>volné termíny</span></div>
+  <div><strong>{{ stats.members }}</strong><span>členů</span></div>
+</section>
+
 <section id="lekce" class="section">
   <h2>Naše lekce</h2>
   <div class="cards">
@@ -41,9 +48,9 @@
           <td>{{ s.trainer }}</td>
           <td><span class="badge {{ 'full' if free <= 0 else 'low' if free <= 2 else 'ok' }}">{{ s.taken }} / {{ s.capacity }}</span></td>
           <td>
-            <form method="post" action="{{ url_for('cancel' if s.mine else 'book', sid=s.id) }}">
+            <form method="post" action="{{ url_for('cancel' if s.mine else 'book', sid=s.id) }}"><input type="hidden" name="csrf" value="{{ csrf() }}">
               {% if s.mine %}<button class="btn btn-small btn-ghost">Zrušit</button>
-              {% elif free <= 0 %}<button class="btn btn-small btn-disabled" disabled>Plno</button>
+              {% elif free <= 0 %}<button class="btn btn-small btn-ghost" formaction="{{ url_for('waitlist_leave' if s.wl else 'waitlist_join', sid=s.id) }}">{{ 'Opustit čekací listinu' if s.wl else 'Čekací listina' }}</button>
               {% else %}<button class="btn btn-small">Rezervovat</button>{% endif %}
             </form>
           </td>
@@ -64,5 +71,12 @@
     <p>info@ironbox.cz &nbsp;|&nbsp; +420 123 456 789</p>
     <p>Po–Pá 6:00–21:00 &nbsp;|&nbsp; So 8:00–14:00</p>
   </div>
+  <h3 class="sub">Napiš nám</h3>
+  <form method="post" action="{{ url_for('contact') }}" class="form"><input type="hidden" name="csrf" value="{{ csrf() }}">
+    <label>Jméno<input name="name" value="{{ user.name if user }}" required></label>
+    <label>E-mail<input type="email" name="email" value="{{ user.email if user }}" required></label>
+    <label>Zpráva<textarea name="message" rows="4" required></textarea></label>
+    <button class="btn">Odeslat</button>
+  </form>
 </section>
 {% endblock %}

@@ -183,7 +183,8 @@ footer {
 /* ---------- Mobil ---------- */
 @media (max-width: 700px) {
   .navbar { padding: 14px 20px; }
-  .navbar nav a:not(.btn) { display: none; }
+  .navbar nav a.anchor { display: none; }
+  .navbar nav { gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
   .hero { padding: 0 20px; }
   .hero h1 { font-size: 2.2rem; }
   .section { padding: 56px 20px; }
@@ -208,3 +209,5 @@ button:disabled { cursor: not-allowed; }
 .muted, .muted a { color: var(--muted); }
 .section a:not(.btn) { color: var(--accent); }
 .sub { margin: 32px 0 10px; }
+textarea { padding: 10px 14px; background: var(--card); color: var(--text); border: 1px solid #33333d; border-radius: 8px; font: inherit; }
+.stats { margin-top: 24px; }

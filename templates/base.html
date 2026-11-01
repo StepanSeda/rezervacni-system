@@ -10,11 +10,13 @@
   <header class="navbar">
     <a href="{{ url_for('index') }}" class="logo">IRON<span>BOX</span></a>
     <nav>
-      <a href="{{ url_for('index') }}#lekce">Lekce</a>
-      <a href="{{ url_for('index') }}#rozvrh">Rozvrh</a>
-      <a href="{{ url_for('index') }}#kontakt">Kontakt</a>
+      <a class="anchor" href="{{ url_for('index') }}#lekce">Lekce</a>
+      <a class="anchor" href="{{ url_for('index') }}#rozvrh">Rozvrh</a>
+      <a class="anchor" href="{{ url_for('index') }}#kontakt">Kontakt</a>
       {% if user %}
         <a href="{{ url_for('my') }}">Moje rezervace</a>
+        <a href="{{ url_for('profile') }}">Profil</a>
+        <span class="muted" title="Kredity na rezervace">⚡ {{ user.credits }}</span>
         {% if user.is_admin %}<a href="{{ url_for('admin') }}">Admin</a>{% endif %}
         <a href="{{ url_for('logout') }}" class="btn btn-small">Odhlásit ({{ user.name }})</a>
       {% else %}
